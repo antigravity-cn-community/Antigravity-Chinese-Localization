@@ -11,6 +11,7 @@ const { DOM_TRANSLATOR_INJECTION } = require('./src/build-injection');
 const { createReleaseManager } = require('./release-manager');
 const { createPackageInstaller } = require('./package-installer');
 const { isAppRunningStrict, stopAntigravityProcesses } = require('./process-check');
+const { installMacLocalization, macBackupPath, macBundleRunning, restoreMacLocalization } = require('./macos-localize');
 const { readAsarPackageVersion } = require('./asar-version');
 const { findValidOfficialBackup } = require('./src/backup-utils');
 const {
@@ -29,6 +30,7 @@ const {
 } = require('./auto-restore');
 
 const CURRENT_VERSION = '2.34.0';
+const MAC_VERSIONS = ['2.34.0', '2.35.0'];
 const RELEASE_VERSION = '2.34.0.1'; // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致
 
 function compareVersions(v1, v2) {
@@ -1988,6 +1990,10 @@ function describeSshConfigProblem(file, { what, why, fix }) {
 // Full workflow runner (protected by shared writeLock, temp isolation, symlink guard & shell-free ASAR CLI)
 async function runLocalizationWorkflow(appDir) {
   return writeLock.tryRun(async () => {
+    if (process.platform === 'darwin') {
+      logs = [];
+      return installMacLocalization(appDir, { versions: MAC_VERSIONS, applyTranslations, runAsarCli, log });
+    }
     const resourcesDir = getResourcesDir(appDir);
     const asarPath = path.join(resourcesDir, 'app.asar');
     const backupPath = path.join(resourcesDir, 'app.asar.bak');
@@ -2075,9 +2081,6 @@ async function runLocalizationWorkflow(appDir) {
       } catch (_) {}
     }
 
-    if (process.platform === 'darwin') {
-      log('macOS 提示：如启动时提示“已损坏”，请执行: xattr -cr "/Applications/Antigravity.app" && codesign --force --deep --sign - "/Applications/Antigravity.app"');
-    }
     log('Antigravity 2.0 一键汉化成功完成！现在您可以安全启动程序了。');
     log('=================== 汉化流程结束 ===================');
   }, { owner: 'localize', conflictMessage: '当前已有安装、下载或汉化任务正在进行，请稍候重试' });
@@ -2086,6 +2089,10 @@ async function runLocalizationWorkflow(appDir) {
 // Restore workflow (unified backup discovery + strict version guard + atomic replace)
 async function runRestoreWorkflow(appDir) {
   return writeLock.tryRun(async () => {
+    if (process.platform === 'darwin') {
+      logs = [];
+      return restoreMacLocalization(appDir, log);
+    }
     const resourcesDir = getResourcesDir(appDir);
     const asarPath = path.join(resourcesDir, 'app.asar');
     const legacyBackupPath = path.join(resourcesDir, 'app.asar.bak');
@@ -2197,7 +2204,7 @@ const server = http.createServer(async (req, res) => {
 
     // Delegate release manager & package installer routes (equipped with securityToken & writeLock)
     if (releaseManager.handleRequest(req, res)) return;
-    if (packageInstaller.handleRequest(req, res)) return;
+    if (process.platform !== 'darwin' && packageInstaller.handleRequest(req, res)) return;
 
     const isMutating = req.method === 'POST' || req.method === 'DELETE' || req.method === 'PUT' || req.method === 'PATCH';
     verifySameOriginAndToken(req, {
@@ -2209,6 +2216,10 @@ const server = http.createServer(async (req, res) => {
     const urlObj = new URL(req.url || '/', `http://127.0.0.1:${activePort}`);
     const pathname = urlObj.pathname;
 
+    if (process.platform === 'darwin' && pathname === '/api/release-install') {
+      throw httpError('macOS 请在设置与维护中使用本地脚本汉化。', 400);
+    }
+
     if (pathname === '/api/status' && req.method === 'GET') {
       const username = urlObj.searchParams.get('username') || '';
       const useDefault = urlObj.searchParams.get('useDefault') !== 'false';
@@ -2219,20 +2230,23 @@ const server = http.createServer(async (req, res) => {
       const asarPath = path.join(resourcesDir, 'app.asar');
 
       const isInstalled = fs.existsSync(asarPath);
-      const isRunning = isAppRunning();
+      const isMac = process.platform === 'darwin';
+      const isRunning = isMac ? isInstalled && macBundleRunning(path.dirname(appDir)) : isAppRunning();
       const installedPackageVersion = isInstalled ? readAsarPackageVersion(asarPath) : null;
       const isLocalized = isInstalled && isLocalizedAsar(asarPath);
       const isUpdateOverwritten = Boolean(isInstalled && !isLocalized);
-      const backupInfo = findValidOfficialBackup({
-        resourcesDir,
-        targetVersion: installedPackageVersion,
-        isLocalizedAsar,
-      });
-      const hasBackup = Boolean(backupInfo.match);
-      const backupPath = backupInfo.match ? backupInfo.match.path : path.join(resourcesDir, 'app.asar.bak');
+      const officialBackup = isMac ? null : findValidOfficialBackup({
+        resourcesDir, targetVersion: installedPackageVersion, isLocalizedAsar,
+      }).match;
+      const backupPath = isMac
+        ? macBackupPath(appDir, installedPackageVersion)
+        : officialBackup?.path || path.join(resourcesDir, 'app.asar.bak');
+      const hasBackup = isMac
+        ? Boolean(backupPath && fs.lstatSync(backupPath, { throwIfNoEntry: false })?.isDirectory())
+        : Boolean(officialBackup);
 
       try {
-        const patch = await findAvailablePatch({
+        const patch = isMac ? null : await findAvailablePatch({
           workspaceDir: WORKSPACE_DIR,
           targetVersion: installedPackageVersion,
           releaseManager,
@@ -2279,6 +2293,11 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/auto-restore' && req.method === 'POST') {
       const params = await readJsonBody(req);
       const appDir = getAppDir(params.username, params.useDefault, params.customPath);
+      if (process.platform === 'darwin') {
+        await runLocalizationWorkflow(appDir);
+        sendJson(res, 200, { success: true, result: { code: 'RESTORED' }, logs });
+        return;
+      }
       const result = await writeLock.tryRun(
         () => executeAutoRestore({
           appDir,
@@ -2533,7 +2552,7 @@ if (require.main === module) {
       console.error('[失败] 汉化注入失败:', err.message);
       process.exit(1);
     }
-  } else if (process.argv.includes('--auto-restore')) {
+  } else if (process.platform !== 'darwin' && process.argv.includes('--auto-restore')) {
     (async () => {
       console.log('=======================================================');
       console.log('  Antigravity 2.0 汉化自动恢复程序 (官方更新后自动检查)');
@@ -2571,14 +2590,14 @@ if (require.main === module) {
     (async () => {
       const defaultAppDir = getAppDir(getHostUsername(), true, '');
       const status = await checkClientStatus({ appDir: defaultAppDir, getResourcesDir });
-      const patch = await findAvailablePatch({ workspaceDir: WORKSPACE_DIR, targetVersion: status.appVersion, releaseManager });
+      const patch = process.platform === 'darwin' ? null : await findAvailablePatch({ workspaceDir: WORKSPACE_DIR, targetVersion: status.appVersion, releaseManager });
       console.log(JSON.stringify({ status, patch }, null, 2));
       process.exit(0);
     })().catch((err) => {
       console.error('[异常]', err.message);
       process.exit(1);
     });
-  } else if (process.argv.includes('--now')) {
+  } else if (process.argv.includes('--now') || process.argv.includes('--auto-restore')) {
     const defaultAppDir = getAppDir(getHostUsername(), true, '');
     runLocalizationWorkflow(defaultAppDir)
       .then(() => {

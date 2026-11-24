@@ -4,7 +4,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)" || exit 1
 export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 
 node_is_usable() {
-  [ -n "$1" ] && [ -x "$1" ] && "$1" -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 14 ? 0 : 1)' >/dev/null 2>&1
+  [ -n "$1" ] && [ -x "$1" ] && "$1" -e 'process.exit(((major, minor) => major > 18 || (major === 18 && minor >= 18))(...process.versions.node.split(".").map(Number)) ? 0 : 1)' >/dev/null 2>&1
 }
 
 NODE_BIN="$(command -v node 2>/dev/null)"
@@ -22,13 +22,13 @@ fi
 
 echo 'Antigravity 一键更新与恢复汉化（macOS）'
 if ! node_is_usable "$NODE_BIN"; then
-  echo '需要 Node.js 14 或更新版本。请安装后重试，或按 README 手动替换同版本预制包。'
+  echo '需要 Node.js 18.18.0 或更新版本。请安装后重试。'
   read -r -p '按回车关闭…' _
   exit 1
 fi
 
-echo '请先保存工作：恢复流程会关闭 Antigravity 及相关后台进程。'
-echo '仅使用本地同版本预制包，不联网下载或重新打包。'
+echo '请先保存工作，从菜单正常退出 Antigravity。'
+echo '从官方应用构建同版本汉化，并使用本机 Apple Development 证书签名。'
 read -r -p '输入 y 继续，其他输入取消：' answer
 case "$answer" in
   y|Y) ;;
@@ -40,23 +40,10 @@ RESTORE_CODE=$?
 case "$RESTORE_CODE" in
   0)
     echo '汉化包已就绪，正在打开 Antigravity…'
-    open -a '/Applications/Antigravity.app' 2>/dev/null || open -a Antigravity 2>/dev/null ||
-      echo '提示：未能自动启动应用，请手动打开 Antigravity。'
-    echo ''
-    echo '排障提示（macOS Apple Silicon arm64）：'
-    echo '如遇到系统提示“已损坏 / 无法打开”，请在终端执行去隔离命令：'
-    echo '  xattr -cr "/Applications/Antigravity.app"'
-    echo '必要时补充执行本地重签名（如遇权限不足请在命令前加 sudo）：'
-    echo '  codesign --force --deep --sign - "/Applications/Antigravity.app"'
+    open -a '/Applications/Antigravity.app' 2>/dev/null ||
+      echo '提示：未能自动启动应用，请手动打开 Antigravity，或按 README 恢复官方整包。'
     ;;
-  2) echo '版本不匹配，未覆盖客户端。请获取对应客户端版本的汉化包后重试。' ;;
-  *)
-    echo '恢复失败。请检查上方错误、客户端路径和本地预制包是否完整。'
-    echo '如在 Apple Silicon (arm64) 遇到“已损坏 / 无法打开”提示，可在终端执行：'
-    echo '  xattr -cr "/Applications/Antigravity.app"'
-    echo '必要时执行重签名：'
-    echo '  codesign --force --deep --sign - "/Applications/Antigravity.app"'
-    ;;
+  *) echo '恢复失败。请检查上方错误。' ;;
 esac
 read -r -p '按回车关闭…' _
 exit "$RESTORE_CODE"

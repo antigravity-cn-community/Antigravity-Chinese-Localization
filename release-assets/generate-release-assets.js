@@ -11,6 +11,7 @@ const ITEMS_TO_ZIP = [
   'package.json',
   'index.html',
   'localize.js',
+  'macos-localize.js',
   'auto-restore.js',
   'asar-version.js',
   'process-check.js',
@@ -293,7 +294,7 @@ ${extracted.body}
 | 资产文件 | 文件大小 | SHA256 校验和 | 说明与用途 |
 | :--- | :--- | :--- | :--- |
 | **\`app.asar\`** | ${asarInfo.sizeMB} (${asarInfo.size.toLocaleString()} 字节) | \`${asarInfo.sha256}\` | 预制汉化核心包，适用客户端版本见上方 |
-| **\`app.asar.ready\`** | ${asarInfo.sizeMB} (${asarInfo.size.toLocaleString()} 字节) | \`${asarInfo.sha256}\` | 预制就绪镜像，供 \`一键更新汉化.bat\` 及 macOS \`一键更新汉化.command\` 自动版本校验与原子替换使用 |
+| **\`app.asar.ready\`** | ${asarInfo.sizeMB} (${asarInfo.size.toLocaleString()} 字节) | \`${asarInfo.sha256}\` | 预制就绪镜像，供 Windows \`一键更新汉化.bat\` 校验版本后安装 |
 | **\`default.zip\`** | ${zipInfo.sizeMB} (${zipInfo.size.toLocaleString()} 字节) | \`${zipInfo.sha256}\` | 开箱即用发行包（内置 \`app.asar.ready\`、Web 控制中心与全平台启动器，支持 UTF-8 文件名与 macOS/Linux 可执行权限） |
 | **\`SHA256SUMS.txt\`** | ${shaSumsSize} 字节 | - | 标准 SHA-256 校验清单，供命令行及自动化脚本比对校验 |
 
@@ -302,7 +303,7 @@ ${extracted.body}
 ## 快速使用
 
 - **Windows 一键恢复 / 安装**：解压 \`default.zip\`（或将 \`app.asar.ready\` 与 \`一键更新汉化.bat\` 放在同一目录），双击运行 \`一键更新汉化.bat\`。
-- **macOS 一键恢复 / 安装**：替换 \`app.asar\` 会使 Google 原始代码签名失效，即使版本匹配也可能提示“已损坏”。需要保留官方签名时，请保留原版。了解影响后，可解压 \`default.zip\` 并运行 \`一键更新汉化.command\`（需要 Node.js 18.18.0 或更高版本）。若替换后无法启动，请用 Google 官方完整安装包覆盖安装。
+- **macOS 安装**：正常退出客户端，按 README 的 macOS 说明运行 \`一键更新汉化.command\`。需要 Node.js 18.18.0 或更高版本及本机 Apple Development 签名身份。从受支持的 Google 官方应用构建同版本汉化并保留整包备份。
 - **可视化控制中心**：双击运行 \`双击运行汉化.bat\`（Windows）或执行 \`./运行汉化.sh\`（macOS / Linux），在浏览器 \`http://127.0.0.1:3388\` 中管理汉化与版本更新。
 - **Windows 手动替换**：确认客户端与本补丁版本完全匹配。退出客户端并备份原始 \`app.asar\` 后，再将下载的文件覆盖到 \`resources/app.asar\` 并重启 Antigravity。
 `;

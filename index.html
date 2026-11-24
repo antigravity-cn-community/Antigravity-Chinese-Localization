@@ -1209,7 +1209,7 @@
           <input type="text" id="input-custom-path" name="custom-app-dir" placeholder="C:\Users\用户名\AppData\Local\Programs\antigravity" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="saveAndTriggerStatus()">
         </div>
       </div>
-      <p class="release-meta" id="macos-codesign-tip" hidden style="margin-top: 12px;">macOS Apple Silicon 提示：替换内部归档后若系统拦截提示“已损坏”，请在终端执行 <code>xattr -cr "/Applications/Antigravity.app" &amp;&amp; codesign --force --deep --sign - "/Applications/Antigravity.app"</code> 进行本地重签（注：重签可能重置 macOS 本地权限授权）。</p>
+      <p class="release-meta" id="macos-codesign-tip" hidden style="margin-top: 12px;">macOS 请先正常退出 Antigravity，再使用本地脚本汉化。需要本机 Apple Development 签名身份，安装时会备份 Google 官方整包。</p>
     </div>
 
     <!-- Actions -->
@@ -1505,6 +1505,8 @@
       startPolling(enabled ? 600 : 2500);
     }
 
+    let isMacHost = false;
+
     async function updateStatus() {
       const revision = ++statusRevision;
       const params = getParams();
@@ -1533,6 +1535,8 @@
         
         const isWin = data.platform === 'win32';
         const isMac = data.platform === 'darwin';
+        isMacHost = isMac;
+        updateReleaseControls();
         const sysLabel = isWin ? 'Windows' : (isMac ? 'macOS' : (data.platform === 'linux' ? 'Linux' : data.platform));
         
         document.getElementById('lbl-win-owner').textContent = `${sysLabel} 账户名`;
@@ -1584,7 +1588,13 @@
             const titleEl = document.getElementById('update-banner-title');
             const descEl = document.getElementById('update-banner-desc');
             const btnEl = document.getElementById('btn-auto-restore');
-            if (data.patchAvailable && data.patchIsMatch) {
+            if (isMac) {
+              titleEl.textContent = `检测到客户端未汉化 (v${data.installedPackageVersion || '未知'})`;
+              descEl.textContent = '保存工作并正常退出客户端后，从本机官方应用构建汉化。';
+              btnEl.textContent = '本地汉化';
+              btnEl.onclick = localize;
+              btnEl.disabled = false;
+            } else if (data.patchAvailable && data.patchIsMatch) {
               titleEl.textContent = `检测到客户端处于原版状态 (v${data.installedPackageVersion || '未知'})`;
               descEl.textContent = `本地已就绪匹配汉化包 (v${data.patchVersion})，点击一键恢复汉化。`;
               btnEl.textContent = '一键恢复';
@@ -1608,7 +1618,7 @@
           }
         }
         document.getElementById('app-readiness').textContent = data.isInstalled
-          ? data.isRunning ? '运行中 · 安装时将关闭' : '已退出 · 可安装' : '请检查安装目录';
+          ? data.isRunning ? (isMac ? '运行中 · 请先正常退出' : '运行中 · 安装时将关闭') : '已退出 · 可安装' : '请检查安装目录';
         const targetSummary = document.getElementById('install-target-summary');
         targetSummary.textContent = data.isInstalled ? params.useDefault ? '默认安装路径' : params.customPath : '未找到程序，请检查路径';
         targetSummary.title = data.asarPath || '';
@@ -1708,7 +1718,9 @@
     async function localize() {
       const confirmed = await showConfirm(
         '一键汉化部署确认',
-        '汉化流程将临时关闭正在运行的 Antigravity 2.0 及后台语言服务，解包并注入全功能深度汉化模块。是否立即开始？'
+        isMacHost
+          ? '请确认已保存工作并正常退出 Antigravity。脚本会从官方整包构建并使用本机 Apple Development 证书签名，保留原包。是否开始？'
+          : '汉化流程将临时关闭正在运行的 Antigravity 2.0 及后台语言服务，解包并注入全功能深度汉化模块。是否立即开始？'
       );
       if (!confirmed) return;
 
@@ -1740,7 +1752,9 @@
     async function restore() {
       const confirmed = await showConfirm(
         '还原英文原版确认',
-        '确定要从本地官方安全备份还原为纯英文原版吗？此操作将移除当前汉化修改。'
+        isMacHost
+          ? '请确认已正常退出 Antigravity。确定要恢复带 Google 签名的官方整包吗？'
+          : '确定要从本地官方安全备份还原为纯英文原版吗？此操作将移除当前汉化修改。'
       );
       if (!confirmed) return;
 
@@ -2028,14 +2042,19 @@
       releaseElement('release-select').disabled = releaseListLoading || releaseInstallBusy || !releaseItems.length;
       const busy = releaseWriteBusy();
       const button = releaseElement('btn-release-download');
-      button.disabled = busy || releaseListLoading || !selectedRelease();
+      const cannotDownload = busy || releaseListLoading || !selectedRelease();
+      button.hidden = isMacHost;
+      button.disabled = isMacHost || cannotDownload;
       button.textContent = releaseInstallBusy ? '正在确认或安装…' : releaseDownloadStarting ? '正在准备…' : pendingReleaseInstall ? '下载后确认安装…' : releaseDownload.status === 'downloading' ? '正在下载…' : '下载并安装';
       releaseElement('btn-check-release').disabled = releaseListLoading || releaseInstallBusy;
-      releaseElement('btn-release-download-only').disabled = button.disabled;
-      releaseElement('btn-release-install-downloaded').disabled = busy || releaseDownload.status !== 'completed' || !releaseDownload.cacheId;
+      releaseElement('btn-release-download-only').disabled = cannotDownload;
+      const hasDownloaded = releaseDownload.status === 'completed' && Boolean(releaseDownload.cacheId);
+      releaseElement('btn-release-install-downloaded').hidden = isMacHost || !hasDownloaded;
+      releaseElement('btn-release-install-downloaded').disabled = isMacHost || busy || !hasDownloaded;
       releaseElement('btn-release-cache-refresh').disabled = releaseCacheLoading || releaseInstallBusy || deletingReleaseCaches.size > 0;
       document.querySelectorAll('.release-cache-write').forEach(control => {
-        control.disabled = busy || control.dataset.invalid === 'true';
+        if (control.dataset.install === 'true') control.hidden = isMacHost;
+        control.disabled = busy || control.dataset.invalid === 'true' || control.hidden;
       });
     }
 
@@ -2143,7 +2162,6 @@
       releaseElement('release-download-path-label').hidden = !complete || !releaseDownload.path;
       releaseElement('release-download-path').textContent = releaseDownload.path || '';
       releaseElement('btn-release-progress-refresh').hidden = true;
-      releaseElement('btn-release-install-downloaded').hidden = !complete || !releaseDownload.cacheId;
       if (status === 'failed') pendingReleaseInstall = null;
       updateReleaseControls();
     }
@@ -2183,7 +2201,7 @@
 
     async function downloadSelectedRelease(installAfterDownload = false) {
       const item = selectedRelease();
-      if (!item || releaseWriteBusy()) return;
+      if (!item || releaseWriteBusy() || (isMacHost && installAfterDownload)) return;
       pendingReleaseInstall = installAfterDownload ? { releaseId: item.id, tag: item.tag } : null;
       releaseDownloadStarting = true;
       releaseDownloadRevision++;
@@ -2244,7 +2262,7 @@
     }
 
     async function installReleaseCache(file) {
-      if (releaseWriteBusy()) return;
+      if (isMacHost || releaseWriteBusy()) return;
       if (!file.cacheId || !file.path) {
         showToast('没有可安装的下载缓存，请重新下载。', 'error');
         return;
@@ -2339,6 +2357,7 @@
           install.textContent = '安装';
           install.setAttribute('aria-label', `安装 ${file.tag}`);
           install.dataset.invalid = String(Boolean(file.modified));
+          install.dataset.install = 'true';
           install.addEventListener('click', () => installReleaseCache(file));
           const actions = document.createElement('div');
           actions.className = 'release-toolbar-buttons';

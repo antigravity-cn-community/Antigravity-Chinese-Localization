@@ -20,6 +20,21 @@ function readExactly(fd, size, position) {
   return buffer;
 }
 
+function readAsarHeader(fd) {
+  const archiveSize = fs.fstatSync(fd).size;
+  if (!Number.isSafeInteger(archiveSize) || archiveSize < 16) throw new Error('Invalid ASAR header');
+  const prefix = readExactly(fd, 8, 0);
+  if (prefix.readUInt32LE(0) !== 4) throw new Error('Invalid ASAR header');
+  const headerSize = prefix.readUInt32LE(4);
+  if (headerSize < 8 || headerSize > MAX_HEADER_BYTES || headerSize % 4 !== 0 || headerSize > archiveSize - 8) throw new Error('Invalid ASAR header');
+  const header = readExactly(fd, headerSize, 8);
+  const payloadSize = header.readUInt32LE(0);
+  const jsonSize = header.readInt32LE(4);
+  if (payloadSize !== headerSize - 4 || jsonSize <= 0 || jsonSize > headerSize - 8 ||
+      8 + Math.ceil(jsonSize / 4) * 4 !== headerSize) throw new Error('Invalid ASAR header');
+  return { archiveSize, headerSize, json: header.subarray(8, 8 + jsonSize) };
+}
+
 function packageVersion(bytes) {
   const metadata = JSON.parse(utf8.decode(bytes));
   if (!object(metadata) || typeof metadata.version !== 'string' ||
@@ -59,18 +74,8 @@ function readAsarPackageVersion(asarPath) {
     const stat = fs.lstatSync(archive);
     if (!stat.isFile() || stat.isSymbolicLink()) return null;
     fd = fs.openSync(archive, 'r');
-    const archiveSize = fs.fstatSync(fd).size;
-    if (!Number.isSafeInteger(archiveSize) || archiveSize < 16) return null;
-    const prefix = readExactly(fd, 8, 0);
-    if (prefix.readUInt32LE(0) !== 4) return null;
-    const headerSize = prefix.readUInt32LE(4);
-    if (headerSize < 8 || headerSize > MAX_HEADER_BYTES || headerSize % 4 !== 0 || headerSize > archiveSize - 8) return null;
-    const header = readExactly(fd, headerSize, 8);
-    const payloadSize = header.readUInt32LE(0);
-    const jsonSize = header.readInt32LE(4);
-    if (payloadSize !== headerSize - 4 || jsonSize <= 0 || jsonSize > headerSize - 8 ||
-        8 + Math.ceil(jsonSize / 4) * 4 !== headerSize) return null;
-    const tree = JSON.parse(utf8.decode(header.subarray(8, 8 + jsonSize)));
+    const { archiveSize, headerSize, json } = readAsarHeader(fd);
+    const tree = JSON.parse(utf8.decode(json));
     if (!object(tree) || !object(tree.files) || !Object.prototype.hasOwnProperty.call(tree.files, 'package.json')) return null;
     const entry = tree.files['package.json'];
     if (!object(entry) || entry.link !== undefined || entry.files !== undefined ||
@@ -92,4 +97,4 @@ function readAsarPackageVersion(asarPath) {
   }
 }
 
-module.exports = { readAsarPackageVersion };
+module.exports = { readAsarHeader, readAsarPackageVersion };

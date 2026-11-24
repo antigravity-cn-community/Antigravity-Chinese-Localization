@@ -58,7 +58,7 @@ A high-performance, non-destructive deep Chinese localization patch designed for
 If Antigravity is running, use this prompt to check for a compatible package before following the instructions for your platform:
 
 ```text
-Check my OS and installed Antigravity version. Look for a localization package at https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases that explicitly supports my client version. If either version is unknown or the versions do not match exactly, stop and explain why. Otherwise, point me to the documented installation instructions for my platform. On macOS, first explain that replacing app.asar invalidates Google's original signature. Only check and report. Leave the client running and its files untouched.
+Check my OS and installed Antigravity version. On macOS, check the supported versions in Method 3. On other platforms, look for a package at https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases that explicitly supports my client version. If the version is unknown or unsupported, explain why. If it matches, point me to the documented installation instructions for my platform. Only check and report. Leave the client running and its files untouched.
 ```
 
 ---
@@ -123,18 +123,13 @@ node localize.js --now
 
 ### Method 3: macOS Users
 
-> Replacing `app.asar` invalidates Google's original code signature. macOS may report the app as damaged even when the patch and client versions match. Keep the original installation if you need to retain Google's signature. If the app stops opening after patching, reinstall the complete official Google app to restore its signature. Local re-signing cannot restore Google's signature and may affect existing macOS permissions.
+The installer requires a complete, Google-signed Antigravity 2.34.0 or 2.35.0 app, Node.js 18.18.0 or newer, and an Apple Development certificate and private key in your keychain. You can create a signing identity in Xcode Accounts. Use the official app after installing and opening it through the normal macOS flow. The first run may need npm to download the ASAR packaging tool.
 
-1. Open terminal, grant execute permission, and launch:
-   ```bash
-   chmod +x 运行汉化.sh
-   ./运行汉化.sh
-   ```
-2. Click "下载并安装" (or "使用本地脚本汉化" under Settings & Maintenance) in the dashboard. The default path is `/Applications/Antigravity.app`.
+Save your work and quit Antigravity from its menu. Extract the full release ZIP or use a source checkout. Double-click **`一键更新汉化.command`**, run `node localize.js --now`, or select “使用本地脚本汉化” (Local script localization) in the dashboard. The default target is `/Applications/Antigravity.app`.
 
-After an official update, double-click **`一键更新汉化.command`** from the source checkout or a complete distribution containing `localize.js` (run `chmod +x 一键更新汉化.command` first if needed). This requires Node.js 18.18.0 or newer. It asks you to save your work and confirm before invoking the existing `--auto-restore` flow to close the client, back it up, and reapply localization; the app opens only after success. It does not require `extracted/`, download files, or rebuild archives. Only local prebuilt packages whose actual archive version matches the client are accepted; mismatched or unreadable versions stop the operation. Wait for a matching localization release rather than replacing a newer client with an older package. “Restore” here means restoring localization, not switching back to English.
+The installer builds a localized app from the same official version, updates the ASAR integrity value, and signs the bundle with your local identity. It keeps the original alongside the app as `Antigravity.app.google-<version>.backup`. A normal launch continues to use your existing projects and chats. You may need to regrant macOS permissions. The locally signed bundle is for local use.
 
-The launcher prefers a usable Node from the current PATH and adds common Homebrew locations. If needed, it loads the user’s login/interactive shell configuration for tools such as nvm, fnm, and asdf, then tries NVM’s default version. These tools must be configured in the user’s shell. Failure to open the app only displays a notice and does not change a successful localization exit code.
+To roll back, quit the app and choose “还原英文原版” (Restore the official app) in the dashboard. If an interrupted install left the original app path empty, rename the adjacent full backup back to `Antigravity.app`. If a manual replacement left the app unable to start and you lack a full backup, reinstall the complete app from Google before running the localizer. After an official update, rerun the launcher once the new version is supported.
 
 ---
 
@@ -146,7 +141,7 @@ The launcher prefers a usable Node from the current PATH and adds common Homebre
 # Execute localization immediately and exit
 node localize.js --now
 
-# Re-check and re-apply after an official update (exits 2 on version mismatch)
+# Re-check and re-apply after an official update (exits 2 on version mismatch on Windows/Linux)
 node localize.js --auto-restore
 
 # Show install path, client version, localization state and available patches
@@ -236,14 +231,14 @@ Ensure Antigravity is fully closed before running the script. Antigravity's Go b
 Resolution: Verify in Task Manager that all Antigravity processes have exited, then re-run `node localize.js --now`.
 
 ### Q2: What if an official update overwrites the localization?
-Official updates replace `app.asar`. Simply re-run:
+An official update may overwrite localization. On macOS follow Method 3. On Windows and Linux, rerun:
 ```bash
 node localize.js --now
 ```
 The script will back up the new official file and inject the latest patch, or simply replace `app.asar` with the latest Release asset.
 
 ### Q3: How to cleanly uninstall and restore official English?
-Click "还原英文原版" in the dashboard; alternatively, copy the previously created official backup over the current file — `app.asar.bak` sits in the same `Resources` directory as `app.asar`, so renaming a copy of it to `app.asar` restores the original.
+Quit the app and click "还原英文原版" in the dashboard. On Windows and Linux, you can also copy the official archive backup over the current file — `app.asar.bak` sits in the same `Resources` directory as `app.asar`, so renaming a copy of it to `app.asar` restores the original.
 
 > Make sure Antigravity is fully closed before copying, otherwise the file may be locked. Keeping a copy of `app.asar.bak` also lets you re-localize later.
 
