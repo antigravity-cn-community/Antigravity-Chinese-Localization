@@ -13,7 +13,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2018.18.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.35.0+** 最新架构，完成 `src/` 模块化引擎解耦与 DOM 微任务调度重构，带来百万级吞吐量的极致流畅体验。全量汉化收件箱模式 (`Inbox Mode`)、插件权限管理、语音听写多语言选择、规划模式、系统设置、安全沙盒、Remote SSH 远程开发、Computer Use 桌面操控与预览、内联审批/提问卡片、`Swarm` 多智能体侧栏与 `plugin://` 子框架、`Orchestrator` 模式设置与 `4,830+` 条零重复核心界面文案，严格对齐官方原生轻量级打包规格（v2.35.0 约 7.56 MiB），并对用户打字与代码编辑区实施绝对物理免疫。
+专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.35.1+** 最新架构，完成 `src/` 模块化引擎解耦与 DOM 微任务调度重构，带来百万级吞吐量的极致流畅体验。全量汉化收件箱模式 (`Inbox Mode`)、插件权限管理、语音听写多语言选择、规划模式、系统设置、安全沙盒、Remote SSH 远程开发、Computer Use 桌面操控与预览、内联审批/提问卡片、`Swarm` 多智能体侧栏与 `plugin://` 子框架、`Orchestrator` 模式设置与 `4,830+` 条零重复核心界面文案，严格对齐官方原生轻量级打包规格（v2.35.1 约 7.56 MiB），并对用户打字与代码编辑区实施绝对物理免疫。
 
 > [最新 Release 下载](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [社区讨论与千星里程碑 (Discussions)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [问题反馈与建议](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 

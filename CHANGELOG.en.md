@@ -4,6 +4,12 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.35.1 (2026-11-25) — Official Antigravity 2.35.1 Maintenance Update Adaptation
+
+- **Official v2.35.1 Baseline Sync & Patch Verification**: Synced `extracted/` against official Antigravity `2.35.1` `app.asar`, verified all 231 main-process patch targets hit with `0` skips, rebuilt slim `app.asar.ready` (`--unpack-dir "**/chrome-devtools-mcp/**"`), and bumped package/dashboard metadata to `2.35.1`.
+
+---
+
 ## v2.35.0 (2026-11-24) — Full Official v2.35.0 Support: Inbox Mode & Auto-Resolve, Plugin Permissions, Multi-Language Voice Dictation, Side Question Promotion, Onboarding/WIF Auth & Remote Agents
 
 ### 1. Official v2.35.0 Main-Process Sync & Patch Verification
