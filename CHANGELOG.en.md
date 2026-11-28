@@ -8,7 +8,7 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ### 1. Official v2.36.0 Verification & Version Baseline Alignment
 - **Main-Process (`app.asar`) & Embedded Web UI Diff Audit**: Diffed all 180 non-`node_modules` files in the official `v2.36.0` `app.asar` against `v2.35.2`; confirmed only `package.json` version changed upstream (`0` added/removed/modified JS modules) and all patch points in `localize.js` hit with `0` skips; extracted `language_server.exe` (`CL: 1029995663`) embedded `main.js` (expanded from `12,798,822` to **`13,177,377` bytes**) and audited all new & uncovered UI copy.
-- **Version Gate & Clean LF-Slim `app.asar.ready` Rebuild**: Bumped `localize.js` (`CURRENT_VERSION` / `RELEASE_VERSION`), `package.json`, `extracted/package.json`, `index.html`, and slim `app.asar.ready` to **`2.36.0`**; after LF normalization and `--unpack-dir "**/chrome-devtools-mcp/**"` packaging, `app.asar.ready` weighs **`8,064,913` bytes (`7.69 MiB`)** for seamless `--auto-restore` and zero-Node offline compatibility.
+- **Version Gate & Clean LF-Slim `app.asar.ready` Rebuild**: Bumped `localize.js` (`CURRENT_VERSION` / `RELEASE_VERSION`), `package.json`, `extracted/package.json`, `index.html`, and slim `app.asar.ready` to **`2.36.0`**; after LF normalization and `--unpack-dir "**/chrome-devtools-mcp/**"` packaging, `app.asar.ready` weighs **`8,115,990` bytes (`7.74 MiB`)** for seamless `--auto-restore` and zero-Node offline compatibility.
 
 ### 2. Web UI v2.36.0 Coverage & Dynamic Rules (+161 Zero-Duplicate Entries, +39 `$`-Safe Dynamic Rules)
 - **Git Worktree Conversation Forking**: Localized `Fork in Current Folder`, `Fork in New Git Worktree`, worktree creation progress & rewind tooltips, plus `Work locally on ...` / `Work in ...` / `Checked out in ...` dynamic labels.
@@ -19,7 +19,7 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Remote Control & High-Frequency UI Gaps**: Added `Get started with Remote Control`, `Loading Remote Control QR code…`, `Failed to load instances:`, Hooks handler delete confirmation, Sidecar error/untrusted warnings, terminal corp password warning, remote preview port guidance, GitHub token save/validation errors, `2x playback speed`, comment draft capsule, Diff find toggles, Notebook unimplemented notice, and annotation accessibility labels.
 
 ### 3. End-to-End Verification & Gate
-- Zero-duplicate dictionary expanded to **`5,115` entries**; added `tests/ticket-63-v2360-features.test.js` in `tests/run-all-tests.js`, verified `app.asar.ready` and injection syntax; **70/70 TDD test suites 100% ALL GREEN**.
+- Zero-duplicate dictionary expanded to **`5,398` entries**; added `tests/ticket-63-v2360-features.test.js` in `tests/run-all-tests.js`, verified `app.asar.ready` and injection syntax; **70/70 TDD test suites 100% ALL GREEN**.
 
 ---
 

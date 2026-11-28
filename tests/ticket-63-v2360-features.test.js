@@ -202,6 +202,27 @@ check(
   true
 );
 
+// -----------------------------------------------------------------------------
+// 5. superset 合并词典校验（并集：维护者 #96 基线 + 社区独有词条）
+// -----------------------------------------------------------------------------
+console.log('\n--- 5. superset 合并词典与独有词条校验 ---');
+const supersetDict = require('../src/dictionary').dictionary;
+check('合并词典键数达到并集规模 (>= 5,398)', Object.keys(supersetDict).length >= 5398, true);
+check(
+  '社区独有词条已纳入',
+  supersetDict['Approve & proceed'] === '批准并继续' &&
+    supersetDict['Feeds'] === '信息流' &&
+    supersetDict['Network Secret'] === '网络机密',
+  true
+);
+check(
+  '维护者独有词条保留',
+  supersetDict['Add Environment Variable'] === '添加环境变量' &&
+    supersetDict['Creating git worktree for the forked conversation...'] === '正在为派生的对话创建 Git 工作树...',
+  true
+);
+check('实装 preload 含并集新增文案', preloadJs.includes('批准并继续') && preloadJs.includes('添加网络密钥'), true);
+
 console.log(`\n========== 测试完成: ${passed}/${total} 全部通过 ==========`);
 if (passed !== total) {
   process.exit(1);
