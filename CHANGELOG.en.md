@@ -4,6 +4,21 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.36.0 (2026-11-28) — Official v2.36.0 Sync: Environment Variables & Network Secrets, Feed Streams and Remote-Environment Configuration
+
+### 1. Official Diff Audit & Version Baseline Alignment
+- **Full patch-anchor audit**: Re-extracted the official `v2.36.0` `app.asar` (all 180 non-`node_modules` files) as the baseline; every `localize.js` patch anchor matched with `0` skips (`100%` hit rate); the `dist/menu.js`, `dist/ipcHandlers.js`, `dist/tray.js`, `dist/updater.js` and `dist/remote/*` injection layers carry over unchanged.
+- **Version gate & slim rebuild**: `localize.js` (`CURRENT_VERSION` / `RELEASE_VERSION`), `package.json`, `extracted/package.json`, `index.html` and the prebuilt package are bumped to **`2.36.0`**; `app.asar.ready` is rebuilt to the official slim spec at **`8,060,408` bytes (`7.69 MiB`)**.
+
+### 2. Dictionary Expansion & New Copy Coverage
+- **Dictionary expanded to `5,329` keys with `0` duplicates**: added coverage for environment variables & network secrets (`Environment variables`, `Network secrets`, `Platform Token`), `Feed` streams (`Feeds`, `Filter feed`, `You're all caught up`), remote-environment and sign-in errors (e.g. `Error: Artifacts from remote conversations are not available here.`) and `Arize`/`Meshy`/`Dynatrace` plugin configuration copy.
+- **Brand-name protection retained**: `Orchestrator`, `Swarm` and model names stay in their native English form.
+
+### 3. Verification & Test Gate
+- Added the `tests/ticket-63-v2360-features.test.js` suite (version metadata, new entries and `app.asar.ready` spec checks); the full **70/70 TDD suites pass (ALL GREEN)**.
+
+---
+
 ## v2.35.2 (2026-11-26) — Official v2.35.2 Sync: Mid-Turn Model Switch Notices, Navigation/Error Prefix Rules & Agent Error-Card Combined Sentence Fix
 
 ### 1. Official v2.35.2 Verification & Version Baseline Alignment (Merged PR #90 by `@Justin-Mai`)

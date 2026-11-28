@@ -272,6 +272,7 @@ function addItemToSubmenu(appMenu, submenuLabel, position, item) {
 }
 
 
+
 const menuTranslationMap = {
   'File': '文件',
   'Edit': '编辑',

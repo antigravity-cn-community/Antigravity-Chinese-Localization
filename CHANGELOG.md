@@ -4,6 +4,21 @@
 
 ---
 
+## v2.36.0 (2026-11-28) — 同步适配官方 2.36.0 版本：环境变量与网络机密、Feed 信息流及远程环境配置汉化
+
+### 1. 官方差异核验与版本基线对齐
+- **主进程补丁点全量核验**：以官方 `v2.36.0` `app.asar` 全部 180 个非 `node_modules` 文件重新解包为基准逐文件比对，`localize.js` 全量补丁锚点 `0` 处跳过、`100%` 命中；`dist/menu.js`、`dist/ipcHandlers.js`、`dist/tray.js`、`dist/updater.js`、`dist/remote/*` 等注入层平滑沿用。
+- **版本门禁与瘦身重编**：将 `localize.js`（`CURRENT_VERSION` / `RELEASE_VERSION`）、`package.json`、`extracted/package.json`、`index.html` 与轻量预制包同步升级至 **`2.36.0`**；`app.asar.ready` 严格对齐官方瘦身规范为 **`8,060,408` 字节（`7.69 MiB`）**。
+
+### 2. 词库扩充与新增文案覆盖
+- **词典扩充至 `5,329` 键 `0` 重复**：新增覆盖环境变量与网络机密（`Environment variables`、`Network secrets`、`Platform Token`）、`Feed` 信息流（`Feeds`、`Filter feed`、`You're all caught up`）、远程环境与登录错误（`Error: Artifacts from remote conversations are not available here.` 等）以及 `Arize`/`Meshy`/`Dynatrace` 插件配置文案。
+- **防误伤保留规则沿用**：品牌名 `Orchestrator`、`Swarm` 与模型名继续保持英文原生。
+
+### 3. 全链路验证与测试门禁
+- 新增 `tests/ticket-63-v2360-features.test.js` 专项套件（版本元数据、新增词条与 `app.asar.ready` 规格校验）；全工程 **70/70 组 TDD 自动化测试套件 100% ALL GREEN**。
+
+---
+
 ## v2.35.2 (2026-11-26) — 同步适配官方 2.35.2 版本：模型运行中切换提示、导航/操作报错动态规则与智能体错误卡片组合句修复
 
 ### 1. 官方 v2.35.2 差异核验与版本基线对齐（整合 PR #90 `@Justin-Mai`）
